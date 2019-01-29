@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="        http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd        http://camel.apache.org/schema/spring http://camel.apache.org/schema/spring/camel-spring.xsd">
+    <!-- <import resource="fuse-demo-queue-read-context.xml"/> -->
+    <bean class="org.test.MyBean" id="helloBean"/>
+    <bean
+        class="org.springframework.jdbc.datasource.DriverManagerDataSource" id="mySqlDataSource">
+        <property name="driverClassName" value="com.mysql.jdbc.Driver"/>
+        <property name="url" value="jdbc:mysql://localhost:3306/demo_table_02"/>
+        <property name="username" value="demouser"/>
+        <property name="password" value="demopassword"/>
+    </bean>
+    <bean class="org.apache.activemq.camel.component.ActiveMQComponent" id="activemq">
+        <property name="brokerURL" value="tcp://localhost:61616"/>
+    </bean>
+    <camelContext id="spring-context" xmlns="http://camel.apache.org/schema/spring">
+        <endpoint id="mapToJson" uri="dozer:mapToJson?sourceModel=java.util.Map&amp;targetModel=output.Output&amp;marshalId=transform-json&amp;mappingFile=transformation.xml"/>
+        <dataFormats>
+            <xmljson id="xmljson"/>
+            <xmljson expandableProperties="d e"
+                forceTopLevelObject="true" id="xmljsonWithOptions"
+                removeNamespacePrefixes="true" rootName="newRoot"
+                skipNamespaces="true" trimSpaces="true"/>
+            <json id="java2Json" library="Jackson"/>
+        </dataFormats>
+        <route id="_mainRoute">
+            <from id="_from1" uri="direct:start"/>
+            <doTry id="_doTry1">
+                <to id="_to1" uri="validator:schema/shipping.xsd"/>
+                <marshal id="_marshalXml2Json" ref="xmljson"/>
+                <setBody id="_insertBlobSqlBody">
+                    <simple>insert into demo_table (message) values ('${body}')</simple>
+                </setBody>
+                <to id="_to2" uri="jdbc:mySqlDataSource"/>
+                <setBody id="_readPkSqlBody">
+                    <simple>select max(id) as id from demo_table</simple>
+                </setBody>
+                <to id="_to2" uri="jdbc:mySqlDataSource"/>
+                <log id="_logPrimaryKey" message="${body}"/>
+                <doCatch id="_doCatch1">
+                    <exception>org.apache.camel.ValidationException</exception>
+                    <log id="_logException" message="============= Exception Start ============="/>
+                    <setBody id="_setExceptionBody">
+                        <simple>"message = Input Data is InValid: ${exception.message}"</simple>
+                    </setBody>
+                    <log id="_logException2" message="============= Exception End ============="/>
+                </doCatch>
+                <setBody id="_setJsonMsgBody">
+                    <simple>{"id": ${body.get(0).get("id")} }</simple>
+                </setBody>
+                <log id="_logQueuePayload" message="===== JSON Message: ${body} "/>
+                <to id="_to3" pattern="InOnly" uri="activemq:queue:demo-queue"/>
+                <setBody id="_setGoodBody">
+                    <constant>"message = Input is successfully processed"</constant>
+                </setBody>
+            </doTry>
+        </route>
+        <route id="_queueProcessRoute">
+            <from id="_fromDemoQueue" uri="activemq:queue:demo-queue"/>
+            <convertBodyTo id="_convertBodyToMap" type="java.lang.String"/>
+            <unmarshal id="_unmarshal1">
+                <json library="Jackson"/>
+            </unmarshal>
+            <setBody id="_setSelectMsgBody">
+                <simple>select message from demo_table where id=${body.get('id')}</simple>
+            </setBody>
+            <to id="_toSelectDemoTable" uri="jdbc:mySqlDataSource"/>
+            <transform id="_transform">
+                <groovy>
+					String message = body.get(0).get("message").toString();
+					return message;
+				</groovy>
+            </transform>
+            <to id="_writeToFile" uri="file:/Users/pbalellu/Panindra/Development/demos/FuseDemoWorkspace/fuse-demo/src/main/resources/output?fileName=demo-message.json"/>
+        </route>
+        <route id="_getRoute">
+            <from id="_from1" uri="direct:getstart"/>
+            <bean id="_bean1" ref="helloBean"/>
+        </route>
+    </camelContext>
+</beans>

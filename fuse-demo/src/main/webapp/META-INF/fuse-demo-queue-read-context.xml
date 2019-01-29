@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:camel="http://camel.apache.org/schema/spring"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd        http://camel.apache.org/schema/spring http://camel.apache.org/schema/spring/camel-spring.xsd">
+    <!-- <bean
+        class="org.springframework.jdbc.datasource.DriverManagerDataSource" id="mySqlDataSource2">
+        <property name="driverClassName" value="com.mysql.jdbc.Driver"/>
+        <property name="url" value="jdbc:mysql://localhost:3306/demo_table_02"/>
+        <property name="username" value="demouser"/>
+        <property name="password" value="demopassword"/>
+    </bean> -->
+    <!-- <bean class="org.apache.activemq.camel.component.ActiveMQComponent" id="activemq2">
+        <property name="brokerURL" value="tcp://localhost:61616"/>
+    </bean> -->
+    <camelContext id="queue-read-context"
+        trace="false" xmlns="http://camel.apache.org/schema/spring">
+    <!-- <routeContext id="queue-read-context" xmlns="http://camel.apache.org/schema/spring"> -->
+        <route id="_queueProcessRoute">
+            <from id="_fromDemoQueue" uri="activemq:queue:demo-queue"/>
+            <convertBodyTo id="_convertBodyToMap" type="java.lang.String"/>
+            <unmarshal id="_unmarshal1">
+                <json library="Jackson"/>
+            </unmarshal>
+            <setBody id="_setSelectMsgBody">
+                <simple>select message from demo_table where id=${body.get('id')}</simple>
+            </setBody>
+            <to id="_toSelectDemoTable" uri="jdbc:mySqlDataSource"/>
+            <transform id="_transform">
+                <groovy>
+					String message = body.get(0).get("message").toString();
+					return message;
+				</groovy>
+            </transform>
+            <log id="_logMessageFromDemoDB" message="${body} "/>
+            <to id="_writeToFile" uri="file:/Users/pbalellu/Panindra/Development/demos/FuseDemoWorkspace/fuse-demo/src/main/resources/output?fileName=demo-message.json"/>
+            <log id="_logMessageFromFile" message="${body} "/>
+        </route>
+    <!-- </routeContext> -->
+    </camelContext>
+</beans>
