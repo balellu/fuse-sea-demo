@@ -15,11 +15,15 @@ Prerequisites
 * JBoss EAP 7.1
 * Fuse 7.2
 * MySQL 
-- Once you log into MySQL run below commands
--- create db demo_table_02;
--- CREATE TABLE demo_table ( id int NOT NULL AUTO_INCREMENT, message JSON, PRIMARY KEY (ID)); 
--- Note that username: demouser and password: demopassword is set up to access MySQL and demo_table
-* Download ActiveMQ and create a queue named "demo-queue"
+
+   Once you log into MySQL run below commands
+   
+   `create db demo_table_02;`
+   
+   `CREATE TABLE demo_table ( id int NOT NULL AUTO_INCREMENT, message JSON, PRIMARY KEY (ID));`
+   
+   Note that `username: demouser` and `password: demopassword` is set up to access MySQL and demo_table
+* Download ActiveMQ and create a queue named `demo-queue`
 
 
 Getting started at the Command Line
