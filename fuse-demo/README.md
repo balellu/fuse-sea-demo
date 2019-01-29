@@ -12,7 +12,14 @@ Prerequisites
 
 * Minimum of Java 1.7
 * Maven 3.2 or greater
-* JBoss EAP 6.4
+* JBoss EAP 7.1
+* Fuse 7.2
+* MySQL 
+- Once you log into MySQL run below commands
+-- create db demo_table_02;
+-- CREATE TABLE demo_table ( id int NOT NULL AUTO_INCREMENT, message JSON, PRIMARY KEY (ID)); 
+-- Note that username: demouser and password: demopassword is set up to access MySQL and demo_table
+* Download ActiveMQ and create a queue named "demo-queue"
 
 
 Getting started at the Command Line
@@ -57,6 +64,9 @@ Otherwise you can get Arquillian to start and stop the server for you (Note: you
 
 Deploying the application
 -------------------------
+DevStudio:
+1. Import this application in Devstudio 
+2. Start fuse server runtime in the IDE, then add the application to the server, this will deploy the app
 
 To deploy the application to a running application server do:
 
@@ -73,6 +83,20 @@ The server console should display lines like the following:
 
 Access the application
 ----------------------
+
+Fuse-Demo App
+Soap UI
+1. Download and install SoapUI
+2. Import Soap-UI project in src/resources/soapui folder to SoapUI
+3. Expand SoapUI project and look for POST and GET methods
+4. POST method will post XML that will converted to JSON and inserted to Database
+5. Primary key will be read from DB and posted into the demo-queue
+
+Fuse-Dozer-Demo App
+Soap UI
+1. Follow same steps as Fuse-Demo app tioll 4
+2. Use GET method to invoke dezer-demo functinality
+
 
 The application will be available at http://localhost:8080/your-context-root?name=Kermit
 
