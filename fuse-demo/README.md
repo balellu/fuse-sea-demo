@@ -1,4 +1,4 @@
-WildFly Camel Spring XML Web Application
+Fuse Spring XML Integration
 =============
 
 This is a template Apache Camel Spring application for the WildFly Camel subsystem. 
